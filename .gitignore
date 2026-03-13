@@ -1,0 +1,5 @@
+output/
+*.txt
+*.json
+*.log
+/tmp/
