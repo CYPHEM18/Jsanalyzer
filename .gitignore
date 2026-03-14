@@ -4,3 +4,5 @@ output/
 *.log
 /tmp/
 test_target.js
+test_*.js
+sample_*.js
