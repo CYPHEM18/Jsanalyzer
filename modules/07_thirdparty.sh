@@ -3,10 +3,15 @@ LABEL="[THIRDPARTY]"
 TARGET="$1"
 scan() {
 local file="$1"
-grep -noP 'https?://cdn\.[^\s"'"'"']+' "$file" | sed "s|^|$LABEL [MEDIUM] $file:|"
-grep -niE '(gtm|analytics|hotjar|intercom|segment|mixpanel|hubspot)\.' "$file" | sed "s|^|$LABEL [INFO] $file:|"
-grep -niE '__proto__|prototype\[|constructor\[' "$file" | sed "s|^|$LABEL [CRITICAL] $file:|"
-grep -niE '(dangerouslySetInnerHTML|innerHTML|document\.write|eval\()' "$file" | sed "s|^|$LABEL [CRITICAL] $file:|"
+# Prototype pollution — very specific, almost no false positives
+grep -niE '__proto__\s*=' "$file" | grep -v '^\s*//' | sed "s|^|$LABEL [CRITICAL] $file:|"
+grep -niE 'prototype\[['"'"'"]\s*[a-zA-Z]+\s*['"'"'"]\]\s*=' "$file" | grep -v '^\s*//' | sed "s|^|$LABEL [CRITICAL] $file:|"
+# DOM XSS sinks with user input
+grep -niE '\.(innerHTML|outerHTML)\s*=' "$file" | grep -v '^\s*//' | grep -viE '(innerHTML\s*=\s*["'"'"'`]<)' | sed "s|^|$LABEL [CRITICAL] $file:|"
+grep -niE 'document\.write\s*\(' "$file" | grep -v '^\s*//' | sed "s|^|$LABEL [CRITICAL] $file:|"
+grep -niE '\beval\s*\(' "$file" | grep -v '^\s*//' | grep -v 'evaluate\|eval(' | sed "s|^|$LABEL [CRITICAL] $file:|"
+# External CDN scripts
+grep -noP 'https?://cdn\.[a-zA-Z0-9.\-]+/[^\s"'"'"']+\.js' "$file" | grep -v '^\s*//' | sed "s|^|$LABEL [MEDIUM] $file:|"
 }
 if [[ -f "$TARGET" ]]; then scan "$TARGET"
 elif [[ -d "$TARGET" ]]; then find "$TARGET" -name "*.js" | while read -r f; do scan "$f"; done; fi
