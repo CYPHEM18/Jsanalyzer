@@ -3,14 +3,16 @@ LABEL="[THIRDPARTY]"
 TARGET="$1"
 scan() {
 local file="$1"
-# Prototype pollution — very specific, almost no false positives
+VENDOR_COUNT=$(grep -oiE '(bootstrap|jquery|popper|lodash|moment|react|vue|angular|ember|backbone)' "$file" 2>/dev/null | wc -l)
+if [[ "$VENDOR_COUNT" -gt 10 ]]; then
+echo "$LABEL [INFO] $file: Vendor bundle detected ($VENDOR_COUNT hits) — skipping to avoid false positives"
+return
+fi
 grep -niE '__proto__\s*=' "$file" | grep -v '^\s*//' | sed "s|^|$LABEL [CRITICAL] $file:|"
-grep -niE 'prototype\[['"'"'"]\s*[a-zA-Z]+\s*['"'"'"]\]\s*=' "$file" | grep -v '^\s*//' | sed "s|^|$LABEL [CRITICAL] $file:|"
-# DOM XSS sinks with user input
-grep -niE '\.(innerHTML|outerHTML)\s*=' "$file" | grep -v '^\s*//' | grep -viE '(innerHTML\s*=\s*["'"'"'`]<)' | sed "s|^|$LABEL [CRITICAL] $file:|"
+grep -niE 'prototype\['"'"'[a-zA-Z]+'"'"'\]\s*=' "$file" | grep -v '^\s*//' | sed "s|^|$LABEL [CRITICAL] $file:|"
+grep -niE '\.(innerHTML|outerHTML)\s*=' "$file" | grep -v '^\s*//' | sed "s|^|$LABEL [CRITICAL] $file:|"
 grep -niE 'document\.write\s*\(' "$file" | grep -v '^\s*//' | sed "s|^|$LABEL [CRITICAL] $file:|"
-grep -niE '\beval\s*\(' "$file" | grep -v '^\s*//' | grep -v 'evaluate\|eval(' | sed "s|^|$LABEL [CRITICAL] $file:|"
-# External CDN scripts
+grep -niE '\beval\s*\([^)]{3,}\)' "$file" | grep -v '^\s*//' | sed "s|^|$LABEL [CRITICAL] $file:|"
 grep -noP 'https?://cdn\.[a-zA-Z0-9.\-]+/[^\s"'"'"']+\.js' "$file" | grep -v '^\s*//' | sed "s|^|$LABEL [MEDIUM] $file:|"
 }
 if [[ -f "$TARGET" ]]; then scan "$TARGET"

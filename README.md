@@ -51,3 +51,11 @@ EnvConfig
 Environment & config leakage
 Disclaimer
 For use on systems you own or have explicit written authorization to test.
+
+## Version History
+| Version | Changes |
+|---------|---------|
+| v1.3 | Auto-detect vendor bundles, skip false positives in Bootstrap/jQuery |
+| v1.2 | Reduced false positives across all 11 modules |
+| v1.1 | Added `-l` flag for bulk URL list scanning |
+| v1.0 | Initial release — 11 modules |
