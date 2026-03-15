@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="1.3"
+VERSION="1.4"
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -102,7 +102,9 @@ if [[ ! -f "$module_path" ]]; then echo -e "${RED}[!] Module not found: $module_
 echo -e "\n${CYAN}[ Module $num ] $name${NC}"
 echo -e "${CYAN}--------------------------------------------------${NC}"
 local results
-results=$(bash "$module_path" "$target" 2>/dev/null | sort -u)
+STRIPPED=$(bash "$MODULES_DIR/00_strip_comments.sh" "$target")
+    results=$(bash "$module_path" "$STRIPPED" 2>/dev/null | sed "s|$STRIPPED|$target|g" | sort -u)
+    rm -f "$STRIPPED"
 if [[ -z "$results" ]]; then
 echo -e "${DIM}  No findings.${NC}"
 MODULE_COUNTS[$num]=0
