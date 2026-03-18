@@ -7,3 +7,4 @@ test_target.js
 test_*.js
 sample_*.js
 nexbank_vulnerable.js
+realworld_target.js
